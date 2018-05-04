@@ -45,7 +45,13 @@ if(qaImgItem && qaImgItem.length>0){
     qaImgItem.each(function(){
         var context = $(this),
             img = new Image(),
-            src = $(this).css('backgroundImage').match(/url\(\"?(.*)\"\)/)[1];
+            src = $(this).css('backgroundImage') || '';
+        if(src && src.match(/url\(\"?(.*)\"\)/)!=null){
+            src = src.match(/url\(\"?(.*)\"\)/)[1];
+        }else{
+            // ios
+            src = src.substring(4,src.length-1);
+        }
         img.src = src;
         img.onerror=function(){
           context.css('backgroundImage','url("http://m.kmb2b.com/reswap/images/wap/question/error.jpg")');
@@ -155,3 +161,32 @@ if($("#qa-wrap").length>0){
         timeoutId = setTimeout(callback,100)
     }.bind(this),false);
 }
+
+// 移动端滚动穿透问题完美解决方案
+/*
+css增加
+body.modal-open {
+    position: fixed;
+    width: 100%;
+}
+*/
+/**
+  * ModalHelper helpers resolve the modal scrolling issue on mobile devices
+  * https://github.com/twbs/bootstrap/issues/15852
+  * requires document.scrollingElement polyfill https://github.com/yangg/scrolling-element
+  */
+var ModalHelper = (function(bodyCls) {
+  var scrollTop;
+  return {
+    afterOpen: function() {
+      scrollTop = document.scrollingElement.scrollTop;
+      document.body.classList.add(bodyCls);
+      document.body.style.top = -scrollTop + 'px';
+    },
+    beforeClose: function() {
+      document.body.classList.remove(bodyCls);
+      // scrollTop lost after set position:fixed, restore it back.
+      document.scrollingElement.scrollTop = scrollTop;
+    }
+  };
+})('modal-open');
